@@ -1,6 +1,6 @@
 <?php
 // Datos de conexión a la base de datos
-$host = "localhost:3309";   // Servidor y puerto donde está MySQL (3307 en este caso)
+$host = "localhost:3306";   // Servidor y puerto donde está MySQL (3307 en este caso)
 $usuario = "root";          // Usuario de MySQL
 $password = "";             // Contraseña del usuario (vacía en entorno local)
 $base_datos = "recepapp";   // Nombre de la base de datos a la que se va a conectar
