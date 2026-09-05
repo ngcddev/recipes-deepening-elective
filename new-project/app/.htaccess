@@ -1,0 +1,3 @@
+# Bloquea el acceso web directo a la carpeta app/ (modelos, controladores, config).
+# Solo public/ debe ser accesible desde el navegador.
+Require all denied
