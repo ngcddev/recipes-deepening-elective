@@ -15,6 +15,8 @@
     <?php endif; ?>
 
     <form method="POST" enctype="multipart/form-data">
+      <?php echo csrf_field(); ?>
+
       <div class="form-group">
         <label for="titulo"><i class="fas fa-heading"></i> Título de la Receta</label>
         <input type="text" id="titulo" name="titulo" value="<?php echo htmlspecialchars($receta['titulo']); ?>" required>
@@ -70,11 +72,11 @@
         <i class="fas fa-save"></i> Guardar Cambios
       </button>
 
-      <a href="<?php echo url('ver-recetas-propias.php'); ?>" class="btn-secondary">
+      <a href="<?php echo route('RecetaController', 'mine'); ?>" class="btn-secondary">
         <i class="fas fa-arrow-left"></i> Volver a Mis Recetas
       </a>
 
-      <a href="<?php echo url('ver-receta.php?id=' . $receta['id']); ?>" class="btn-secondary">
+      <a href="<?php echo route('RecetaController', 'show', ['id' => $receta['id']]); ?>" class="btn-secondary">
         <i class="fas fa-eye"></i> Ver Receta
       </a>
     </form>

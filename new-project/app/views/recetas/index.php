@@ -9,6 +9,9 @@
 <section class="filtros">
   <div class="filtros-container">
     <form method="GET" class="filtros-form">
+      <input type="hidden" name="controller" value="RecetaController">
+      <input type="hidden" name="action" value="index">
+
       <div class="search-box">
         <i class="fas fa-search"></i>
         <input type="text" name="busqueda" id="busqueda"
@@ -31,7 +34,7 @@
       </button>
 
       <?php if ($busqueda !== '' || $categoria_id > 0): ?>
-        <a href="<?php echo url('ver-mas-recetas.php'); ?>" class="btn-limpiar">Limpiar</a>
+        <a href="<?php echo route('RecetaController', 'index'); ?>" class="btn-limpiar">Limpiar</a>
       <?php endif; ?>
     </form>
   </div>
@@ -70,11 +73,11 @@
             </div>
 
             <div class="card-actions">
-              <a href="<?php echo url('ver-receta.php?id=' . $receta['id']); ?>" class="btn-ver">
+              <a href="<?php echo route('RecetaController', 'show', ['id' => $receta['id']]); ?>" class="btn-ver">
                 <i class="fas fa-eye"></i> Ver Receta
               </a>
               <?php if (Session::estaLogeado() && Session::usuarioId() == $receta['usuario_id']): ?>
-                <a href="<?php echo url('editar-receta.php?id=' . $receta['id']); ?>" class="btn-editar">
+                <a href="<?php echo route('RecetaController', 'edit', ['id' => $receta['id']]); ?>" class="btn-editar">
                   <i class="fas fa-edit"></i> Editar
                 </a>
               <?php endif; ?>
@@ -97,11 +100,11 @@
         <?php endif; ?>
       </p>
       <div class="no-resultados-actions">
-        <a href="<?php echo url('ver-mas-recetas.php'); ?>" class="btn-primary">
+        <a href="<?php echo route('RecetaController', 'index'); ?>" class="btn-primary">
           <i class="fas fa-list"></i> Ver Todas las Recetas
         </a>
         <?php if (Session::estaLogeado()): ?>
-          <a href="<?php echo url('agregar-receta.php'); ?>" class="btn-secondary">
+          <a href="<?php echo route('RecetaController', 'create'); ?>" class="btn-secondary">
             <i class="fas fa-plus"></i> Crear Primera Receta
           </a>
         <?php endif; ?>

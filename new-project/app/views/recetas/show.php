@@ -24,6 +24,7 @@
 
       <?php if (Session::estaLogeado()): ?>
         <form method="POST" class="favorito-form">
+          <?php echo csrf_field(); ?>
           <?php if ($es_favorito): ?>
             <button type="submit" name="accion_favorito" value="eliminar" class="btn-favorito active">
               <i class="fas fa-heart"></i> Quitar de Favoritos
@@ -36,7 +37,7 @@
         </form>
       <?php else: ?>
         <div class="login-prompt">
-          <a href="<?php echo url('iniciar-sesion.php'); ?>">Inicia sesión</a> para agregar a favoritos
+          <a href="<?php echo route('AuthController', 'login'); ?>">Inicia sesión</a> para agregar a favoritos
         </div>
       <?php endif; ?>
     </div>
@@ -79,12 +80,13 @@
 
     <?php if (Session::estaLogeado()): ?>
       <form method="POST" class="comentario-form">
+        <?php echo csrf_field(); ?>
         <textarea name="comentario" placeholder="Escribe tu comentario..." required></textarea>
         <button type="submit" class="btn-primary">Publicar Comentario</button>
       </form>
     <?php else: ?>
       <div class="login-prompt">
-        <a href="<?php echo url('iniciar-sesion.php'); ?>">Inicia sesión</a> para dejar un comentario
+        <a href="<?php echo route('AuthController', 'login'); ?>">Inicia sesión</a> para dejar un comentario
       </div>
     <?php endif; ?>
 
@@ -98,6 +100,7 @@
 
               <?php if (Session::estaLogeado() && Session::usuarioId() == $comentario['usuario_id']): ?>
                 <form method="POST" class="eliminar-comentario-form" style="display: inline;">
+                  <?php echo csrf_field(); ?>
                   <button type="submit" name="eliminar_comentario" value="<?php echo $comentario['id']; ?>"
                           class="btn-eliminar" onclick="return confirm('¿Eliminar este comentario?')">
                     <i class="fas fa-trash"></i> Eliminar

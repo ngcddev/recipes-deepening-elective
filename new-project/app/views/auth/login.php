@@ -14,6 +14,8 @@
     <?php endif; ?>
 
     <form method="POST">
+      <?php echo csrf_field(); ?>
+
       <div class="form-group">
         <label>Correo Electrónico:</label>
         <input type="email" name="correo" required>
@@ -27,8 +29,8 @@
       <button type="submit" class="btn-primary">Iniciar Sesión</button>
     </form>
 
-    <p>¿No tienes cuenta? <a href="<?php echo url('registrarse.php'); ?>">Regístrate aquí</a></p>
-    <a href="<?php echo url('index.php'); ?>" class="btn-secondary">← Volver al Inicio</a>
+    <p>¿No tienes cuenta? <a href="<?php echo route('AuthController', 'register'); ?>">Regístrate aquí</a></p>
+    <a href="<?php echo route('HomeController', 'index'); ?>" class="btn-secondary">← Volver al Inicio</a>
   </div>
 </section>
 

@@ -15,21 +15,21 @@
     <h1>RecepApp</h1>
   </div>
   <nav class="menu">
-    <a href="<?php echo url('index.php'); ?>">Inicio</a>
-    <a href="<?php echo url('ver-mas-recetas.php'); ?>">Recetas</a>
+    <a href="<?php echo route('HomeController', 'index'); ?>">Inicio</a>
+    <a href="<?php echo route('RecetaController', 'index'); ?>">Recetas</a>
     <?php if (Session::estaLogeado()): ?>
       <span class="user">Hola, <?php echo htmlspecialchars(Session::usuarioNombre()); ?></span>
       <div class="profile-menu">
         <button class="profile-btn"><i class="fas fa-user"></i> Mi Perfil</button>
         <div class="profile-dropdown">
-          <a href="<?php echo url('ver-recetas-propias.php'); ?>"><i class="fas fa-book"></i> Mis Recetas</a>
-          <a href="<?php echo url('ver-favoritos.php'); ?>"><i class="fas fa-heart"></i> Favoritos</a>
-          <a href="<?php echo url('logout.php'); ?>"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
+          <a href="<?php echo route('RecetaController', 'mine'); ?>"><i class="fas fa-book"></i> Mis Recetas</a>
+          <a href="<?php echo route('FavoritoController', 'index'); ?>"><i class="fas fa-heart"></i> Favoritos</a>
+          <a href="<?php echo route('AuthController', 'logout'); ?>"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
         </div>
       </div>
     <?php else: ?>
-      <a href="<?php echo url('iniciar-sesion.php'); ?>">Iniciar Sesión</a>
-      <a href="<?php echo url('registrarse.php'); ?>">Registrarse</a>
+      <a href="<?php echo route('AuthController', 'login'); ?>">Iniciar Sesión</a>
+      <a href="<?php echo route('AuthController', 'register'); ?>">Registrarse</a>
     <?php endif; ?>
   </nav>
 </header>
