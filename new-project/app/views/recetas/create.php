@@ -14,6 +14,8 @@
     <?php endif; ?>
 
     <form method="POST" enctype="multipart/form-data">
+      <?php echo csrf_field(); ?>
+
       <div class="form-group">
         <label>Título</label>
         <input type="text" name="titulo" value="<?php echo htmlspecialchars($titulo); ?>" required>

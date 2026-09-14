@@ -4,7 +4,7 @@
 <section class="page-header">
   <h2><i class="fas fa-book"></i> Mis Recetas</h2>
   <p>Gestiona todas las recetas que has creado</p>
-  <a href="<?php echo url('agregar-receta.php'); ?>" class="btn-primary">
+  <a href="<?php echo route('RecetaController', 'create'); ?>" class="btn-primary">
     <i class="fas fa-plus"></i> Agregar Nueva Receta
   </a>
 </section>
@@ -34,13 +34,14 @@
             </div>
 
             <div class="card-actions">
-              <a href="<?php echo url('ver-receta.php?id=' . $receta['id']); ?>" class="btn-ver">
+              <a href="<?php echo route('RecetaController', 'show', ['id' => $receta['id']]); ?>" class="btn-ver">
                 <i class="fas fa-eye"></i> Ver
               </a>
-              <a href="<?php echo url('editar-receta.php?id=' . $receta['id']); ?>" class="btn-editar">
+              <a href="<?php echo route('RecetaController', 'edit', ['id' => $receta['id']]); ?>" class="btn-editar">
                 <i class="fas fa-edit"></i> Editar
               </a>
               <form method="POST" class="eliminar-receta-form">
+                <?php echo csrf_field(); ?>
                 <button type="submit" name="eliminar_receta" value="<?php echo $receta['id']; ?>"
                         class="btn-eliminar"
                         onclick="return confirm('¿Estás seguro de eliminar esta receta? Esta acción no se puede deshacer.')">

@@ -10,6 +10,8 @@
     <?php endif; ?>
 
     <form method="POST">
+      <?php echo csrf_field(); ?>
+
       <div class="form-group">
         <label>Nombre Completo:</label>
         <input type="text" name="nombre" required>
@@ -28,8 +30,8 @@
       <button type="submit" class="btn-primary">Registrarse</button>
     </form>
 
-    <p>¿Ya tienes cuenta? <a href="<?php echo url('iniciar-sesion.php'); ?>">Inicia Sesión aquí</a></p>
-    <a href="<?php echo url('index.php'); ?>" class="btn-secondary">← Volver al Inicio</a>
+    <p>¿Ya tienes cuenta? <a href="<?php echo route('AuthController', 'login'); ?>">Inicia Sesión aquí</a></p>
+    <a href="<?php echo route('HomeController', 'index'); ?>" class="btn-secondary">← Volver al Inicio</a>
   </div>
 </section>
 

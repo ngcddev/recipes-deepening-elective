@@ -26,10 +26,11 @@
             </div>
 
             <div class="card-actions">
-              <a href="<?php echo url('ver-receta.php?id=' . $receta['id']); ?>" class="btn-ver">
+              <a href="<?php echo route('RecetaController', 'show', ['id' => $receta['id']]); ?>" class="btn-ver">
                 <i class="fas fa-eye"></i> Ver Receta
               </a>
               <form method="POST" class="eliminar-favorito-form">
+                <?php echo csrf_field(); ?>
                 <button type="submit" name="eliminar_favorito" value="<?php echo $receta['id']; ?>"
                         class="btn-eliminar"
                         onclick="return confirm('¿Quitar de favoritos?')">
@@ -46,7 +47,7 @@
       <i class="fas fa-heart" style="font-size: 4rem; color: #f1cadd; margin-bottom: 20px;"></i>
       <h3>No tienes recetas favoritas aún</h3>
       <p>Descubre recetas deliciosas y guárdalas como favoritas para encontrarlas fácilmente después.</p>
-      <a href="<?php echo url('ver-mas-recetas.php'); ?>" class="btn-primary">
+      <a href="<?php echo route('RecetaController', 'index'); ?>" class="btn-primary">
         <i class="fas fa-search"></i> Explorar Recetas
       </a>
     </div>
