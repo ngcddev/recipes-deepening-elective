@@ -66,3 +66,10 @@ function csrf_verificar(): bool
 
     return !empty($token) && !empty($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
 }
+
+function show_error(string $mensaje = 'La página que buscas no existe.', int $codigo = 404): void
+{
+    http_response_code($codigo);
+    $titulo_pagina = 'Error ' . $codigo . ' - RecepApp';
+    require APP_PATH . '/views/error.php';
+}

@@ -1714,3 +1714,10 @@ body {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(138, 27, 71, 0.3);
 }
+
+.no-resultados-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+}

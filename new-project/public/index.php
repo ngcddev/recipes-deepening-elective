@@ -1,23 +1,31 @@
 <?php
 require_once __DIR__ . '/../app/bootstrap.php';
 
-// Patrón "Forma 4" 
-if (isset($_GET['controller']) && class_exists($_GET['controller'])) {
+const CONTROLLER_DEFAULT = 'HomeController';
+const ACTION_DEFAULT     = 'index';
 
-    $nombreControlador = $_GET['controller'];
-    $controlador = new $nombreControlador(); 
-
-    if (isset($_GET['action']) && method_exists($controlador, $_GET['action'])) {
-        $accion = $_GET['action'];
-        $controlador->$accion();
-    } else {
-        echo 'Método no existe';
-    }
-
+if (isset($_GET['controller'])) {
+    $controller = $_GET['controller'];
+} elseif (!isset($_GET['controller']) && !isset($_GET['action'])) {
+    $controller = CONTROLLER_DEFAULT;
 } else {
+    show_error();
+    exit();
+}
 
+if (preg_match('/^[A-Za-z]+Controller$/', $controller) && class_exists($controller)) {
+    $controlador = new $controller();
 
-    $controlador = new HomeController();
-    $controlador->index();
-
+    
+    if (isset($_GET['action']) && is_callable([$controlador, $_GET['action']])) {
+        $action = $_GET['action'];
+        $controlador->$action();
+    } elseif (!isset($_GET['controller']) && !isset($_GET['action'])) {
+        $action = ACTION_DEFAULT;
+        $controlador->$action();
+    } else {
+        show_error();
+    }
+} else {
+    show_error();
 }
