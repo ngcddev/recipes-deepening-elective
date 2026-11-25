@@ -23,14 +23,17 @@
       </div>
 
       <?php if (Session::estaLogeado()): ?>
-        <form method="POST" class="favorito-form">
+        <form method="POST"
+              action="<?php echo route('FavoritoController', $es_favorito ? 'eliminar' : 'agregar'); ?>"
+              class="favorito-form">
           <?php echo csrf_field(); ?>
+          <input type="hidden" name="receta_id" value="<?php echo (int) $receta['id']; ?>">
           <?php if ($es_favorito): ?>
-            <button type="submit" name="accion_favorito" value="eliminar" class="btn-favorito active">
+            <button type="submit" class="btn-favorito active">
               <i class="fas fa-heart"></i> Quitar de Favoritos
             </button>
           <?php else: ?>
-            <button type="submit" name="accion_favorito" value="agregar" class="btn-favorito">
+            <button type="submit" class="btn-favorito">
               <i class="far fa-heart"></i> Agregar a Favoritos
             </button>
           <?php endif; ?>
@@ -79,9 +82,12 @@
     <h3><i class="fas fa-comments"></i> Comentarios</h3>
 
     <?php if (Session::estaLogeado()): ?>
-      <form method="POST" class="comentario-form">
+      <form method="POST"
+            action="<?php echo route('ComentarioController', 'crear'); ?>"
+            class="comentario-form">
         <?php echo csrf_field(); ?>
-        <textarea name="comentario" placeholder="Escribe tu comentario..." required></textarea>
+        <input type="hidden" name="receta_id" value="<?php echo (int) $receta['id']; ?>">
+        <textarea name="comentario" placeholder="Escribe tu comentario..." maxlength="1000" required></textarea>
         <button type="submit" class="btn-primary">Publicar Comentario</button>
       </form>
     <?php else: ?>
@@ -99,10 +105,14 @@
               <span><?php echo date('d/m/Y H:i', strtotime($comentario['fecha'])); ?></span>
 
               <?php if (Session::estaLogeado() && Session::usuarioId() == $comentario['usuario_id']): ?>
-                <form method="POST" class="eliminar-comentario-form" style="display: inline;">
+                <form method="POST"
+                      action="<?php echo route('ComentarioController', 'eliminar'); ?>"
+                      class="eliminar-comentario-form" style="display: inline;">
                   <?php echo csrf_field(); ?>
-                  <button type="submit" name="eliminar_comentario" value="<?php echo $comentario['id']; ?>"
-                          class="btn-eliminar" onclick="return confirm('¿Eliminar este comentario?')">
+                  <input type="hidden" name="receta_id" value="<?php echo (int) $receta['id']; ?>">
+                  <input type="hidden" name="comentario_id" value="<?php echo (int) $comentario['id']; ?>">
+                  <button type="submit" class="btn-eliminar"
+                          onclick="return confirm('¿Eliminar este comentario?')">
                     <i class="fas fa-trash"></i> Eliminar
                   </button>
                 </form>

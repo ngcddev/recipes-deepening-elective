@@ -11,7 +11,7 @@
 
 <section class="recetas-lista">
   <?php if (!empty($mensaje)): ?>
-    <div class="<?php echo strpos($mensaje, '❌') === false ? 'success-message' : 'error-message'; ?>">
+    <div class="<?php echo str_starts_with($mensaje, 'Error') ? 'error-message' : 'success-message'; ?>">
       <?php echo htmlspecialchars($mensaje); ?>
     </div>
   <?php endif; ?>
@@ -27,7 +27,9 @@
           <div class="card-content">
             <span class="categoria-badge"><?php echo htmlspecialchars($receta['categoria_nombre']); ?></span>
             <h4><?php echo htmlspecialchars($receta['titulo']); ?></h4>
-            <p class="descripcion"><?php echo substr(htmlspecialchars($receta['descripcion']), 0, 100); ?>...</p>
+            <p class="descripcion">
+              <?php echo htmlspecialchars(mb_substr($receta['descripcion'], 0, 100)); ?><?php echo mb_strlen($receta['descripcion']) > 100 ? '...' : ''; ?>
+            </p>
 
             <div class="card-meta">
               <span><i class="fas fa-calendar"></i> <?php echo date('d/m/Y', strtotime($receta['fecha_creacion'])); ?></span>
@@ -40,10 +42,12 @@
               <a href="<?php echo route('RecetaController', 'edit', ['id' => $receta['id']]); ?>" class="btn-editar">
                 <i class="fas fa-edit"></i> Editar
               </a>
-              <form method="POST" class="eliminar-receta-form">
+              <form method="POST"
+                    action="<?php echo route('RecetaController', 'eliminar'); ?>"
+                    class="eliminar-receta-form">
                 <?php echo csrf_field(); ?>
-                <button type="submit" name="eliminar_receta" value="<?php echo $receta['id']; ?>"
-                        class="btn-eliminar"
+                <input type="hidden" name="receta_id" value="<?php echo (int) $receta['id']; ?>">
+                <button type="submit" class="btn-eliminar"
                         onclick="return confirm('¿Estás seguro de eliminar esta receta? Esta acción no se puede deshacer.')">
                   <i class="fas fa-trash"></i> Eliminar
                 </button>

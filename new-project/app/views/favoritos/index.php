@@ -18,7 +18,9 @@
           <div class="card-content">
             <span class="categoria-badge"><?php echo htmlspecialchars($receta['categoria_nombre']); ?></span>
             <h4><?php echo htmlspecialchars($receta['titulo']); ?></h4>
-            <p class="descripcion"><?php echo substr(htmlspecialchars($receta['descripcion']), 0, 100); ?>...</p>
+            <p class="descripcion">
+              <?php echo htmlspecialchars(mb_substr($receta['descripcion'], 0, 100)); ?><?php echo mb_strlen($receta['descripcion']) > 100 ? '...' : ''; ?>
+            </p>
 
             <div class="card-meta">
               <span><i class="fas fa-user"></i> <?php echo htmlspecialchars($receta['usuario_nombre']); ?></span>
@@ -29,10 +31,13 @@
               <a href="<?php echo route('RecetaController', 'show', ['id' => $receta['id']]); ?>" class="btn-ver">
                 <i class="fas fa-eye"></i> Ver Receta
               </a>
-              <form method="POST" class="eliminar-favorito-form">
+              <form method="POST"
+                    action="<?php echo route('FavoritoController', 'eliminar'); ?>"
+                    class="eliminar-favorito-form">
                 <?php echo csrf_field(); ?>
-                <button type="submit" name="eliminar_favorito" value="<?php echo $receta['id']; ?>"
-                        class="btn-eliminar"
+                <input type="hidden" name="receta_id" value="<?php echo (int) $receta['id']; ?>">
+                <input type="hidden" name="origen" value="favoritos">
+                <button type="submit" class="btn-eliminar"
                         onclick="return confirm('¿Quitar de favoritos?')">
                   <i class="fas fa-heart-broken"></i> Quitar
                 </button>

@@ -9,7 +9,7 @@
 <section class="form-container">
   <div class="auth-form">
     <?php if ($mensaje): ?>
-      <div class="<?php echo strpos($mensaje, 'Error') === false ? 'success-message' : 'error-message'; ?>">
+      <div class="<?php echo str_starts_with($mensaje, 'Error') ? 'error-message' : 'success-message'; ?>">
         <?php echo htmlspecialchars($mensaje); ?>
       </div>
     <?php endif; ?>
@@ -19,7 +19,8 @@
 
       <div class="form-group">
         <label for="titulo"><i class="fas fa-heading"></i> Título de la Receta</label>
-        <input type="text" id="titulo" name="titulo" value="<?php echo htmlspecialchars($receta['titulo']); ?>" required>
+        <input type="text" id="titulo" name="titulo" maxlength="200"
+               value="<?php echo htmlspecialchars($receta['titulo']); ?>" required>
       </div>
 
       <div class="form-group">
@@ -48,8 +49,8 @@
             <p><small>Imagen actual</small></p>
           </div>
         <?php endif; ?>
-        <input type="file" id="imagen" name="imagen" accept="image/*">
-        <small>Deja vacío para mantener la imagen actual. Formatos: JPG, PNG, GIF</small>
+        <input type="file" id="imagen" name="imagen" accept=".jpg,.jpeg,.png,.gif">
+        <small>Deja vacío para mantener la imagen actual. Formatos: JPG, PNG, GIF. Máximo 2 MB.</small>
         <div id="imagen-preview" style="margin-top: 10px; display: none;">
           <img id="preview-img" src="" alt="Vista previa" style="max-width: 300px; max-height: 300px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
           <p><small>Vista previa de la nueva imagen</small></p>

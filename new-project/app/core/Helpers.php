@@ -1,6 +1,5 @@
 <?php
 
-
 function base_url(): string
 {
     static $base = null;
@@ -12,18 +11,15 @@ function base_url(): string
     return $base;
 }
 
-
 function url(string $path = ''): string
 {
     return base_url() . ($path ? '/' . ltrim($path, '/') : '/');
 }
 
-
 function asset(string $path): string
 {
     return base_url() . '/' . ltrim($path, '/');
 }
-
 
 function obtenerUrlImagen(?string $nombre_imagen): string
 {
@@ -34,15 +30,12 @@ function obtenerUrlImagen(?string $nombre_imagen): string
     return asset('img/' . $nombre_imagen);
 }
 
-
-
 function route(string $controlador, string $accion, array $params = []): string
 {
     $query = array_merge(['controller' => $controlador, 'action' => $accion], $params);
 
     return url('index.php') . '?' . http_build_query($query);
 }
-
 
 function csrf_token(): string
 {
@@ -53,12 +46,10 @@ function csrf_token(): string
     return $_SESSION['csrf_token'];
 }
 
-
 function csrf_field(): string
 {
     return '<input type="hidden" name="csrf_token" value="' . htmlspecialchars(csrf_token()) . '">';
 }
-
 
 function csrf_verificar(): bool
 {
@@ -72,4 +63,45 @@ function show_error(string $mensaje = 'La página que buscas no existe.', int $c
     http_response_code($codigo);
     $titulo_pagina = 'Error ' . $codigo . ' - RecepApp';
     require APP_PATH . '/views/error.php';
+}
+
+/*  Helpers de flujo (controladores)  */
+
+function redirigir(string $url): void
+{
+    header('Location: ' . $url);
+    exit;
+}
+
+// Exige sesión iniciada y devuelve el id del usuario
+function requerir_login(): int
+{
+    if (!Session::estaLogeado()) {
+        redirigir(route('AuthController', 'login'));
+    }
+
+    return (int) Session::usuarioId();
+}
+
+// Exige método POST y token CSRF válido
+function requerir_post(): void
+{
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !csrf_verificar()) {
+        show_error('Solicitud no válida.', 400);
+        exit;
+    }
+}
+
+// Mensaje que sobrevive a una redirección (patrón Post/Redirect/Get)
+function flash(string $mensaje): void
+{
+    $_SESSION['flash'] = $mensaje;
+}
+
+function flash_obtener(): string
+{
+    $mensaje = $_SESSION['flash'] ?? '';
+    unset($_SESSION['flash']);
+
+    return $mensaje;
 }

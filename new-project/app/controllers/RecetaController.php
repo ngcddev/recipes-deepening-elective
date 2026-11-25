@@ -1,13 +1,14 @@
 <?php
 class RecetaController
 {
-   
     public function index(): void
     {
-        $busqueda = isset($_GET['busqueda']) ? trim($_GET['busqueda']) : '';
-        $categoria_id = isset($_GET['categoria']) ? intval($_GET['categoria']) : 0;
+        $busqueda = isset($_GET['busqueda']) && is_string($_GET['busqueda'])
+            ? trim($_GET['busqueda'])
+            : '';
+        $categoria_id = intval($_GET['categoria'] ?? 0);
 
-        $recetas = Receta::buscar($busqueda, $categoria_id);
+        $recetas    = Receta::buscar($busqueda, $categoria_id);
         $categorias = Categoria::todas();
 
         $categoria_nombre = '';
@@ -19,134 +20,73 @@ class RecetaController
         require APP_PATH . '/views/recetas/index.php';
     }
 
- 
     public function show(): void
     {
-        if (empty($_GET['id'])) {
-            header('Location: ' . route('HomeController', 'index'));
-            exit;
-        }
-
-        $receta_id = intval($_GET['id']);
-        $receta = Receta::buscarPorId($receta_id);
+        $receta_id = intval($_GET['id'] ?? 0);
+        $receta    = $receta_id > 0 ? Receta::buscarPorId($receta_id) : null;
 
         if (!$receta) {
-            header('Location: ' . route('HomeController', 'index'));
-            exit;
+            show_error('La receta que buscas no existe.');
+            return;
         }
 
-        $usuario_id = Session::usuarioId();
+        $usuario_id  = Session::usuarioId();
         $es_favorito = Session::estaLogeado() && Favorito::esFavorito($usuario_id, $receta_id);
-
-      
-        if (isset($_POST['accion_favorito']) && Session::estaLogeado() && csrf_verificar()) {
-            if ($_POST['accion_favorito'] === 'agregar') {
-                Favorito::agregar($usuario_id, $receta_id);
-            } elseif ($_POST['accion_favorito'] === 'eliminar') {
-                Favorito::eliminar($usuario_id, $receta_id);
-            }
-            header('Location: ' . route('RecetaController', 'show', ['id' => $receta_id]));
-            exit;
-        }
-
-     
-        if (isset($_POST['comentario']) && Session::estaLogeado() && csrf_verificar()) {
-            $texto = trim($_POST['comentario']);
-            if ($texto !== '') {
-                Comentario::crear($usuario_id, $receta_id, $texto);
-            }
-            header('Location: ' . route('RecetaController', 'show', ['id' => $receta_id]));
-            exit;
-        }
-
-       
-        if (isset($_POST['eliminar_comentario']) && Session::estaLogeado() && csrf_verificar()) {
-            $comentario_id = intval($_POST['eliminar_comentario']);
-            if (Comentario::perteneceAUsuario($comentario_id, $usuario_id)) {
-                Comentario::eliminar($comentario_id);
-            }
-            header('Location: ' . route('RecetaController', 'show', ['id' => $receta_id]));
-            exit;
-        }
-
         $comentarios = Comentario::porReceta($receta_id);
 
         require APP_PATH . '/views/recetas/show.php';
     }
 
-
     public function mine(): void
     {
-        if (!Session::estaLogeado()) {
-            header('Location: ' . route('AuthController', 'login'));
-            exit;
-        }
-
-        $usuario_id = Session::usuarioId();
-        $mensaje = '';
-
-        if (isset($_POST['eliminar_receta']) && csrf_verificar()) {
-            $receta_id = intval($_POST['eliminar_receta']);
-
-            if (Receta::perteneceAUsuario($receta_id, $usuario_id)) {
-                $mensaje = Receta::eliminar($receta_id)
-                    ? 'Receta eliminada exitosamente'
-                    : ' Error al eliminar la receta';
-            } else {
-                $mensaje = ' No tienes permisos para eliminar esta receta';
-            }
-        }
-
-        $recetas = Receta::porUsuario($usuario_id);
+        $usuario_id = requerir_login();
+        $mensaje    = flash_obtener();
+        $recetas    = Receta::porUsuario($usuario_id);
 
         require APP_PATH . '/views/recetas/mine.php';
     }
 
-
     public function create(): void
     {
-        if (!Session::estaLogeado()) {
-            header('Location: ' . route('AuthController', 'login'));
-            exit;
-        }
+        $usuario_id = requerir_login();
 
-        $usuario_id = Session::usuarioId();
         $mensaje = '';
         $titulo = $descripcion = $ingredientes = $instrucciones = '';
         $categoria_id = 0;
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $datos = $this->datosFormulario();
+
+            // Se conservan los datos escritos para repintar el formulario si algo falla
+            $titulo        = $datos['titulo'];
+            $descripcion   = $datos['descripcion'];
+            $ingredientes  = $datos['ingredientes'];
+            $instrucciones = $datos['instrucciones'];
+            $categoria_id  = $datos['categoria_id'];
+
             if (!csrf_verificar()) {
-                $mensaje = 'Token de seguridad inválido. Recarga la página e intenta nuevamente.';
+                $mensaje = 'Error: token de seguridad inválido. Recarga la página e intenta nuevamente.';
             } else {
-                $titulo = trim($_POST['titulo']);
-                $descripcion = trim($_POST['descripcion']);
-                $ingredientes = trim($_POST['ingredientes']);
-                $instrucciones = trim($_POST['instrucciones']);
-                $categoria_id = intval($_POST['categoria_id']);
+                $errores = Receta::validar($datos);
 
-                
-                $resultado = $this->procesarImagen($_FILES['imagen'] ?? null, null);
-
-                if ($resultado['error']) {
-                    $mensaje = $resultado['error'];
+                if ($errores) {
+                    $mensaje = 'Error: ' . implode(' ', $errores);
                 } else {
-                    $ok = Receta::crear([
-                        'titulo'        => $titulo,
-                        'descripcion'   => $descripcion,
-                        'ingredientes'  => $ingredientes,
-                        'instrucciones' => $instrucciones,
-                        'imagen'        => $resultado['nombre_imagen'],
-                        'categoria_id'  => $categoria_id,
-                        'usuario_id'    => $usuario_id,
-                    ]);
+                    $imagen = Imagen::guardar($_FILES['imagen'] ?? null);
 
-                    if ($ok) {
-                        $mensaje = '¡Receta agregada exitosamente!';
-                        $titulo = $descripcion = $ingredientes = $instrucciones = '';
-                        $categoria_id = 0;
+                    if ($imagen['error']) {
+                        $mensaje = 'Error: ' . $imagen['error'];
                     } else {
-                        $mensaje = 'Error al agregar la receta. Intenta nuevamente.';
+                        $datos['imagen']     = $imagen['nombre'];
+                        $datos['usuario_id'] = $usuario_id;
+
+                        if (Receta::crear($datos)) {
+                            flash('¡Receta agregada exitosamente!');
+                            redirigir(route('RecetaController', 'mine'));
+                        }
+
+                        Imagen::eliminar($imagen['nombre']); // no dejar archivos huérfanos
+                        $mensaje = 'Error: no se pudo agregar la receta. Intenta nuevamente.';
                     }
                 }
             }
@@ -157,69 +97,54 @@ class RecetaController
         require APP_PATH . '/views/recetas/create.php';
     }
 
-  
     public function edit(): void
     {
-        if (!Session::estaLogeado()) {
-            header('Location: ' . route('AuthController', 'login'));
-            exit;
-        }
+        $usuario_id = requerir_login();
+        $mensaje    = '';
 
-        $usuario_id = Session::usuarioId();
-        $mensaje = '';
+        $receta_id = intval($_GET['id'] ?? 0);
+        $receta    = $receta_id > 0 ? Receta::buscarPorId($receta_id) : null;
 
-        if (empty($_GET['id'])) {
-            header('Location: ' . route('RecetaController', 'mine'));
-            exit;
-        }
-
-        $receta_id = intval($_GET['id']);
-        $receta = Receta::buscarPorId($receta_id);
-
-  
-        if (!$receta || (int) $receta['usuario_id'] !== $usuario_id) {
-            header('Location: ' . route('RecetaController', 'mine'));
-            exit;
+        if (!$receta || !Receta::perteneceAUsuario($receta_id, $usuario_id)) {
+            redirigir(route('RecetaController', 'mine'));
         }
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $datos = $this->datosFormulario();
+
             if (!csrf_verificar()) {
-                $mensaje = 'Token de seguridad inválido. Recarga la página e intenta nuevamente.';
+                $mensaje = 'Error: token de seguridad inválido. Recarga la página e intenta nuevamente.';
             } else {
-                $titulo = trim($_POST['titulo']);
-                $descripcion = trim($_POST['descripcion']);
-                $ingredientes = trim($_POST['ingredientes']);
-                $instrucciones = trim($_POST['instrucciones']);
-                $categoria_id = intval($_POST['categoria_id']);
+                $errores = Receta::validar($datos);
 
-                $resultado = $this->procesarImagen($_FILES['imagen'] ?? null, $receta['imagen']);
-                $nombre_imagen = $resultado['nombre_imagen'];
-
-                if ($resultado['error']) {
-                    $mensaje = $resultado['error'];
-                }
-
-                $ok = Receta::actualizar($receta_id, [
-                    'titulo'        => $titulo,
-                    'descripcion'   => $descripcion,
-                    'ingredientes'  => $ingredientes,
-                    'instrucciones' => $instrucciones,
-                    'imagen'        => $nombre_imagen,
-                    'categoria_id'  => $categoria_id,
-                ]);
-
-                if ($ok) {
-                    $mensaje = $mensaje ?: '¡Receta actualizada exitosamente!';
-                    $receta = array_merge($receta, [
-                        'titulo'        => $titulo,
-                        'descripcion'   => $descripcion,
-                        'ingredientes'  => $ingredientes,
-                        'instrucciones' => $instrucciones,
-                        'categoria_id'  => $categoria_id,
-                        'imagen'        => $nombre_imagen,
-                    ]);
+                if ($errores) {
+                    $mensaje = 'Error: ' . implode(' ', $errores);
+                    $receta  = array_merge($receta, $datos);
                 } else {
-                    $mensaje = 'Error al actualizar la receta. Intenta nuevamente.';
+                    $imagen = Imagen::guardar($_FILES['imagen'] ?? null, $receta['imagen']);
+
+                    if ($imagen['error']) {
+                        $mensaje = 'Error: ' . $imagen['error'];
+                        $receta  = array_merge($receta, $datos);
+                    } else {
+                        $datos['imagen'] = $imagen['nombre'];
+                        $imagen_nueva    = $imagen['nombre'] !== $receta['imagen'];
+
+                        if (Receta::actualizar($receta_id, $datos)) {
+                            if ($imagen_nueva) {
+                                Imagen::eliminar($receta['imagen']); // la anterior ya no se usa
+                            }
+                            flash('¡Receta actualizada exitosamente!');
+                            redirigir(route('RecetaController', 'mine'));
+                        }
+
+                        if ($imagen_nueva) {
+                            Imagen::eliminar($imagen['nombre']); // la actualización falló
+                        }
+                        $mensaje = 'Error: no se pudo actualizar la receta. Intenta nuevamente.';
+                        unset($datos['imagen']);
+                        $receta = array_merge($receta, $datos);
+                    }
                 }
             }
         }
@@ -229,55 +154,37 @@ class RecetaController
         require APP_PATH . '/views/recetas/edit.php';
     }
 
-
-    private function procesarImagen(?array $archivo, ?string $imagenAnterior): array
+    public function eliminar(): void
     {
-        $imgDir = dirname(__DIR__, 2) . '/public/img';
+        $usuario_id = requerir_login();
+        requerir_post();
 
-        $hayArchivoValido = $archivo && ($archivo['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK;
+        $receta_id = intval($_POST['receta_id'] ?? 0);
+        $receta    = $receta_id > 0 ? Receta::buscarPorId($receta_id) : null;
 
-
-        if (!$hayArchivoValido && $imagenAnterior !== null) {
-            return ['error' => null, 'nombre_imagen' => $imagenAnterior];
+        if (!$receta) {
+            flash('Error: la receta no existe.');
+        } elseif (!Receta::perteneceAUsuario($receta_id, $usuario_id)) {
+            flash('Error: no tienes permisos para eliminar esta receta.');
+        } elseif (Receta::eliminar($receta_id)) {
+            Imagen::eliminar($receta['imagen']);
+            flash('Receta eliminada exitosamente.');
+        } else {
+            flash('Error: no se pudo eliminar la receta.');
         }
 
-       
-        if (!$hayArchivoValido && $imagenAnterior === null) {
-            return ['error' => 'Error: Debes subir una imagen para la receta.', 'nombre_imagen' => null];
-        }
+        redirigir(route('RecetaController', 'mine'));
+    }
 
-        $extension = strtolower(pathinfo($archivo['name'], PATHINFO_EXTENSION));
-        $permitidas = ['jpg', 'jpeg', 'png', 'gif'];
-
-        if (!in_array($extension, $permitidas, true)) {
-            return [
-                'error' => 'Error: Solo se permiten imágenes JPG, JPEG, PNG o GIF.',
-                'nombre_imagen' => $imagenAnterior,
-            ];
-        }
-
-        $nombreImagen = uniqid('receta_') . '.' . $extension;
-        $rutaDestino = $imgDir . '/' . $nombreImagen;
-
-        if (!is_dir($imgDir)) {
-            mkdir($imgDir, 0755, true);
-        }
-
-        if (!move_uploaded_file($archivo['tmp_name'], $rutaDestino)) {
-            return [
-                'error' => 'Error: No se pudo subir la imagen. Intenta nuevamente.',
-                'nombre_imagen' => $imagenAnterior,
-            ];
-        }
-
-     
-        if ($imagenAnterior && $imagenAnterior !== 'placeholder.jpg') {
-            $rutaAnterior = $imgDir . '/' . $imagenAnterior;
-            if (file_exists($rutaAnterior)) {
-                unlink($rutaAnterior);
-            }
-        }
-
-        return ['error' => null, 'nombre_imagen' => $nombreImagen];
+    // Lee y normaliza los campos del formulario (sin avisos si falta alguno)
+    private function datosFormulario(): array
+    {
+        return [
+            'titulo'        => trim($_POST['titulo'] ?? ''),
+            'descripcion'   => trim($_POST['descripcion'] ?? ''),
+            'ingredientes'  => trim($_POST['ingredientes'] ?? ''),
+            'instrucciones' => trim($_POST['instrucciones'] ?? ''),
+            'categoria_id'  => intval($_POST['categoria_id'] ?? 0),
+        ];
     }
 }

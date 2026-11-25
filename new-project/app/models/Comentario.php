@@ -30,26 +30,16 @@ class Comentario
         return $ok;
     }
 
-    public static function perteneceAUsuario(int $comentarioId, int $usuarioId): bool
+    // Verifica la propiedad y borra en una sola consulta
+    public static function eliminarDeUsuario(int $comentarioId, int $usuarioId): bool
     {
         $conexion = Database::getConexion();
-        $stmt = $conexion->prepare("SELECT id FROM comentarios WHERE id = ? AND usuario_id = ?");
+        $stmt = $conexion->prepare("DELETE FROM comentarios WHERE id = ? AND usuario_id = ?");
         $stmt->bind_param("ii", $comentarioId, $usuarioId);
         $stmt->execute();
-        $existe = $stmt->get_result()->num_rows > 0;
+        $borrado = $stmt->affected_rows > 0;
         $stmt->close();
 
-        return $existe;
-    }
-
-    public static function eliminar(int $comentarioId): bool
-    {
-        $conexion = Database::getConexion();
-        $stmt = $conexion->prepare("DELETE FROM comentarios WHERE id = ?");
-        $stmt->bind_param("i", $comentarioId);
-        $ok = $stmt->execute();
-        $stmt->close();
-
-        return $ok;
+        return $borrado;
     }
 }

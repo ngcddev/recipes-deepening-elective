@@ -1,6 +1,38 @@
 <?php
 class Receta
 {
+    private const TITULO_MAX = 200;
+
+    // Reglas de los datos: el Modelo las conoce
+    public static function validar(array $d): array
+    {
+        $errores = [];
+
+        if ($d['titulo'] === '') {
+            $errores[] = 'El título es obligatorio.';
+        } elseif (mb_strlen($d['titulo']) > self::TITULO_MAX) {
+            $errores[] = 'El título no puede superar ' . self::TITULO_MAX . ' caracteres.';
+        }
+
+        if ($d['descripcion'] === '') {
+            $errores[] = 'La descripción es obligatoria.';
+        }
+
+        if ($d['ingredientes'] === '') {
+            $errores[] = 'Los ingredientes son obligatorios.';
+        }
+
+        if ($d['instrucciones'] === '') {
+            $errores[] = 'Las instrucciones son obligatorias.';
+        }
+
+        if ($d['categoria_id'] <= 0 || !Categoria::buscarPorId($d['categoria_id'])) {
+            $errores[] = 'Selecciona una categoría válida.';
+        }
+
+        return $errores;
+    }
+
     // Últimas N recetas para la portada
     public static function destacadas(int $limite = 6): array
     {
@@ -19,7 +51,7 @@ class Receta
         return $resultado;
     }
 
-    // Búsqueda con filtros de texto y categoría (antes en ver-mas-recetas.php)
+    // Búsqueda con filtros de texto y categoría
     public static function buscar(string $busqueda, int $categoriaId): array
     {
         $conexion = Database::getConexion();
@@ -156,26 +188,38 @@ class Receta
         return $ok;
     }
 
-    // Elimina la receta y sus registros dependientes (comentarios y favoritos)
+    // Elimina la receta y sus dependientes en una transacción: o se borra todo o no se borra nada
+    // (requiere tablas InnoDB)
     public static function eliminar(int $id): bool
     {
         $conexion = Database::getConexion();
 
-        $stmt = $conexion->prepare("DELETE FROM comentarios WHERE receta_id = ?");
-        $stmt->bind_param("i", $id);
-        $stmt->execute();
-        $stmt->close();
+        $sentencias = [
+            "DELETE FROM comentarios WHERE receta_id = ?",
+            "DELETE FROM favoritos WHERE receta_id = ?",
+            "DELETE FROM recetas WHERE id = ?",
+        ];
 
-        $stmt = $conexion->prepare("DELETE FROM favoritos WHERE receta_id = ?");
-        $stmt->bind_param("i", $id);
-        $stmt->execute();
-        $stmt->close();
+        $conexion->begin_transaction();
 
-        $stmt = $conexion->prepare("DELETE FROM recetas WHERE id = ?");
-        $stmt->bind_param("i", $id);
-        $ok = $stmt->execute();
-        $stmt->close();
+        try {
+            foreach ($sentencias as $sql) {
+                $stmt = $conexion->prepare($sql);
+                $stmt->bind_param("i", $id);
 
-        return $ok;
+                if (!$stmt->execute()) {
+                    throw new RuntimeException($stmt->error);
+                }
+
+                $stmt->close();
+            }
+
+            $conexion->commit();
+            return true;
+        } catch (Throwable $e) {
+            $conexion->rollback();
+            error_log('Error al eliminar receta ' . $id . ': ' . $e->getMessage());
+            return false;
+        }
     }
 }

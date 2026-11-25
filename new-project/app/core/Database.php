@@ -9,20 +9,32 @@ class Database
         if (self::$conexion === null) {
             $config = require __DIR__ . '/../config/database.php';
 
-            self::$conexion = new mysqli(
-                $config['host'],
-                $config['usuario'],
-                $config['password'],
-                $config['base_datos']
-            );
-
-            if (self::$conexion->connect_error) {
-                die('Error de conexión: ' . self::$conexion->connect_error);
+            try {
+                $conexion = new mysqli(
+                    $config['host'],
+                    $config['usuario'],
+                    $config['password'],
+                    $config['base_datos']
+                );
+            } catch (mysqli_sql_exception $e) {
+                self::fallar($e->getMessage());
             }
 
-            self::$conexion->set_charset('utf8mb4');
+            if ($conexion->connect_error) {
+                self::fallar($conexion->connect_error);
+            }
+
+            $conexion->set_charset('utf8mb4');
+            self::$conexion = $conexion;
         }
 
         return self::$conexion;
+    }
+
+    private static function fallar(string $detalle): void
+    {
+        error_log('Error de conexión a la base de datos: ' . $detalle);
+        http_response_code(500);
+        exit('No se pudo conectar con la base de datos. Intenta más tarde.');
     }
 }
